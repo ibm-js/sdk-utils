@@ -9,9 +9,9 @@ git checkout $3 -- docs
 cd docs
 mkdir $3
 # .md -> .html
-find . -name "*.md" -exec sed -i.bak "s/.md/.html/g" '{}' \;
-rm *.bak
-cp * $3
-git add $3
+find . -maxdepth 1 -name "*.md" -exec sed -i.bak "s/.md/.html/g" '{}' \;
+rm -f *.bak
+mv *.* $3
+git add --all .
 git commit -m "update doc"
 git push origin gh-pages

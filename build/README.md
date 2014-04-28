@@ -1,10 +1,19 @@
-# delite-build
+# Build config to build the ibm-js projects
 
-Build version of [ibm-js/delite](https://github.com/ibm-js/delite).
+## Installation
 
-## Status
+To install this project, get the content of this directory and run the following commands:
+```
+$ npm install
+$ bower install -p
+```
 
-No official release yet.
+## Usage
+Call the default grunt task to build delite and deliteful for now.
+```
+$ grunt
+```
+Then the build projects will be in `delite-build` and `deliteful-build`.
  
 ## Licensing
 

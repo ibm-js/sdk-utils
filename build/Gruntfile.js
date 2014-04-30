@@ -55,6 +55,17 @@ module.exports = function (grunt) {
 				name: "deliteful/layer",
 				includeFiles: ["deliteful/**/*.js"],
 				excludeFiles: ["deliteful/tests/**", "deliteful/samples/**", "deliteful/docs/**", "deliteful/**/holodark/**", "deliteful/**/ios/**", "deliteful/Gruntfile.js"]
+			},{
+				name: "liaison/liaison",
+				includeFiles: ["liaison/**/*.js"],
+				excludeFiles: ["liaison/delite/**", "liaison/polymer/**", "liaison/tests/**", "liaison/samples/**", "liaison/docs/**", "liaison/node_modules/**", "liaison/Gruntfile.js"]
+			},{
+				name: "liaison/delite",
+				includeFiles: ["liaison/delite/**/*.js"],
+				excludeFiles: ["liaison/delite/widgets/StarRating.js"]
+			},{
+				name: "liaison/polymer",
+				includeFiles: ["liaison/polymer/**/*.js"]
 			}]
 		},
 
@@ -87,7 +98,7 @@ module.exports = function (grunt) {
 				dot: true
 			},
 			others: {
-				src: ["delite/LICENSE", "delite/.bowerrc", "deliteful/LICENSE", "deliteful/.bowerrc"],
+				src: ["delite/LICENSE", "delite/.bowerrc", "deliteful/LICENSE", "deliteful/.bowerrc", "liaison/LICENSE", "liaison/.bowerrc"],
 				dest: outdir
 			},
 			delitefulSamples: {
@@ -111,6 +122,97 @@ module.exports = function (grunt) {
 					}
 				}
 			},
+
+			liaisonSamples: {
+				src: ["liaison/samples/**", "!liaison/samples/delite/**", "!liaison/samples/polymer/**", "!liaison/samples/delite-polymer/**", "!liaison/samples/**/loan.html"],
+				dest: outdir,
+				options: {
+					noProcess: "**/*.png",
+					process: function (content /*, path*/) {
+						var count = 0,
+							config = "\t\trequirejs.config({\n" +
+								"\t\t\tpackages:[\n" +
+								"\t\t\t\t{name: 'liaison', location: 'liaison-build'}\n" +
+								"\t\t\t]\n" +
+								"\t\t});\n";
+						return content.replace(/(<script[^>]*>)(\s*require\s*\(\s*\[[\s\S]*?)(<\/script>)/ig, function(match, openTag, content, closeTag){
+							return openTag + "\n" +
+								(count++ === 0 ? config : "") +
+								'\t\trequire(["liaison/liaison"], function () {' + content + "});\n\t\t" +
+								closeTag;
+						});
+					}
+				}
+			},
+
+			liaisonDeliteSamples: {
+				src: ["liaison/samples/delite/**", "liaison/delite/widgets/StarRating.js", "liaison/delite/widgets/templates/StarRating.html", "!liaison/samples/**/loan.html"],
+				dest: outdir,
+				options: {
+					noProcess: "**/*.png",
+					process: function (content /*, path*/) {
+						var count = 0,
+							config = "\t\trequirejs.config({\n" +
+								"\t\t\tpackages:[\n" +
+								"\t\t\t\t{name: 'delite', location: 'delite-build'},\n" +
+								"\t\t\t\t{name: 'deliteful', location: 'deliteful-build'},\n" +
+								"\t\t\t\t{name: 'liaison', location: 'liaison-build'}\n" +
+								"\t\t\t]\n" +
+								"\t\t});\n";
+						return content.replace(/(<script[^>]*>)(\s*require\s*\(\s*\[[\s\S]*?)(<\/script>)/ig, function(match, openTag, content, closeTag){
+							return openTag + "\n" +
+								(count++ === 0 ? config : "") +
+								'\t\trequire(["delite/layer", "deliteful/layer", "liaison/liaison", "liaison/delite"], function () {' + content + "});\n\t\t" +
+								closeTag;
+						});
+					}
+				}
+			},
+
+			liaisonPolymerSamples: {
+				src: ["liaison/samples/polymer/**", "!liaison/samples/**/loan.html"],
+				dest: outdir,
+				options: {
+					noProcess: "**/*.png",
+					process: function (content /*, path*/) {
+						var count = 0,
+							config = "\t\trequirejs.config({\n" +
+								"\t\t\tpackages:[\n" +
+								"\t\t\t\t{name: 'liaison', location: 'liaison-build'}\n" +
+								"\t\t\t]\n" +
+								"\t\t});\n";
+						return content.replace(/(<script[^>]*>)(\s*require\s*\(\s*\[[\s\S]*?)(<\/script>)/ig, function(match, openTag, content, closeTag){
+							return openTag + "\n" +
+								(count++ === 0 ? config : "") +
+								'\t\trequire(["liaison/liaison", "liaison/polymer"], function () {' + content + "});\n\t\t" +
+								closeTag;
+						});
+					}
+				}
+			},
+
+			liaisonDelitePolymerSamples: {
+				src: ["liaison/samples/delite-polymer/**", "!liaison/samples/**/loan.html"],
+				dest: outdir,
+				options: {
+					noProcess: "**/*.png",
+					process: function (content /*, path*/) {
+						var count = 0,
+							config = "\t\trequirejs.config({\n" +
+								"\t\t\tpackages:[\n" +
+								"\t\t\t\t{name: 'delite', location: 'delite-build'},\n" +
+								"\t\t\t\t{name: 'liaison', location: 'liaison-build'}\n" +
+								"\t\t\t]\n" +
+								"\t\t});\n";
+						return content.replace(/(<script[^>]*>)(\s*require\s*\(\s*\[[\s\S]*?)(<\/script>)/ig, function(match, openTag, content, closeTag){
+							return openTag + "\n" +
+								(count++ === 0 ? config : "") +
+								'\t\trequire(["delite/layer", "liaison/liaison", "liaison/delite", "liaison/polymer"], function () {' + content + "});\n\t\t" +
+								closeTag;
+						});
+					}
+				}
+			},
 			
 			deliteBuild: {
 				expand: true,
@@ -126,12 +228,20 @@ module.exports = function (grunt) {
 				src: "**/*",
 				dest: "deliteful-build/",
 				dot: true
+			},
+			
+			liaisonBuild: {
+				expand: true,
+				cwd: outdir + "liaison",
+				src: "**/*",
+				dest: "liaison-build/",
+				dot: true
 			}
 		},
 
 		// Erase temp directory and previous build
 		clean: {
-			erase: [outdir, "delite-build", "deliteful-build"],
+			erase: [outdir, "delite-build", "deliteful-build", "liaison-build"],
 			finish: [tmpdir]
 		}
 	});
@@ -157,6 +267,15 @@ module.exports = function (grunt) {
 				case "deliteful/layer":
 					grunt.task.run("amddirscan:" + layer.name + ":" + name + ":" + amdloader);
 					break;				
+				case "liaison/liaison":
+					grunt.task.run("amddirscan:" + layer.name + ":" + name + ":" + amdloader);
+					break;
+				case "liaison/delite":
+					grunt.task.run("amddirscan:" + layer.name + ":" + name + ":" + amdloader);
+					break;
+				case "liaison/polymer":
+					grunt.task.run("amddirscan:" + layer.name + ":" + name + ":" + amdloader);
+					break;
 				}
 			grunt.task.run("amdplugins:" + layer.name + ":" + name + ":" + amdloader);
 			grunt.task.run("amdserialize:" + layer.name + ":" + name + ":" + outprop);
@@ -176,5 +295,5 @@ module.exports = function (grunt) {
 	grunt.loadNpmTasks('grunt-contrib-clean');
 
 	// Default task.
-	grunt.registerTask("default", ["clean:erase", "amdbuild:amdloader", "amdreportjson:amdbuild", "copy:others", "copy:delitefulSamples", "copy:deliteBuild","copy:delitefulBuild", "clean:finish"]);
+	grunt.registerTask("default", ["clean:erase", "amdbuild:amdloader", "amdreportjson:amdbuild", "copy:others", "copy:delitefulSamples", "copy:liaisonSamples", "copy:liaisonDeliteSamples", "copy:liaisonPolymerSamples", "copy:liaisonDelitePolymerSamples", "copy:deliteBuild","copy:delitefulBuild", "copy:liaisonBuild", "clean:finish"]);
 };

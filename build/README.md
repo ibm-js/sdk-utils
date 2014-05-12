@@ -9,11 +9,11 @@ $ bower install -p
 ```
 
 ## Usage
-Call the default grunt task to build delite and deliteful for now.
+Call the default grunt task to build `delite`, `deliteful`, `dtreemap`, `dpointer`.
 ```
 $ grunt
 ```
-Then the build projects will be in `delite-build` and `deliteful-build`.
+Then the build projects will be in `projectname-build`.
  
 ## Licensing
 

@@ -12,6 +12,11 @@ module.exports = function (grunt) {
 	// list of files to include in the layer.
 	var outprop = "amdoutput";
 	
+	var libDirs = ["delite", "deliteful", "dpointer", "dtreemap"];
+	var libDirsBuild = libDirs.map(function(dir) {
+		return dir + "-build";
+	});
+	
 	var delitePatterns = [
 			// Include
 			"delite/**/*.js", 
@@ -30,8 +35,6 @@ module.exports = function (grunt) {
 			"!delite/**/ios/**"
 		];
 
-	
-	
 	grunt.initConfig({
 	// The loader config should go here.
 		amdloader: {
@@ -55,6 +58,13 @@ module.exports = function (grunt) {
 				name: "deliteful/layer",
 				includeFiles: ["deliteful/**/*.js"],
 				excludeFiles: ["deliteful/tests/**", "deliteful/samples/**", "deliteful/docs/**", "deliteful/**/holodark/**", "deliteful/**/ios/**", "deliteful/Gruntfile.js"]
+			},{
+				name: "dpointer/layer",
+				includeFiles: ["dpointer/**/*.js"]
+			},{
+				name: "dtreemap/layer",
+				includeFiles: ["dtreemap/**/*.js"],
+				excludeFiles: ["dtreemap/tests/**", "dtreemap/demos/**", "dtreemap/docs/**"]
 			}]
 		},
 
@@ -85,53 +95,12 @@ module.exports = function (grunt) {
 				src: "<%= " + outprop + ".plugins.rel %>",
 				dest: outdir,
 				dot: true
-			},
-			others: {
-				src: ["delite/LICENSE", "delite/.bowerrc", "deliteful/LICENSE", "deliteful/.bowerrc"],
-				dest: outdir
-			},
-			delitefulSamples: {
-				src: ["deliteful/samples/**"],
-				dest: outdir,
-				options: {
-					noProcess: "**/*.png",
-					process: function (content, path) {
-						var scriptRE = /(<script[^>]*>[\s\S]*?<\/script>[\s\S]*?<script[^>]*>[\s\S]*?)(\s*?<\/script>[\s\S]*?<script[^>]*>\s*?)([\s\S]*?\S)(\s*?<\/script>)/;
-						return content.replace(scriptRE, function(match, p1, p2, p3, p4, offset, string){
-							return p1 + "\n"+
-								"\t\trequirejs.config({\n" +
-								"\t\t\tpackages:[\n" +
-								"\t\t\t\t{name: 'delite', location: 'delite-build'},\n" +
-								"\t\t\t\t{name: 'deliteful', location: 'deliteful-build'}\n" + 
-								"\t\t\t]\n" +
-								"\t\t});" +
-								p2 + "\n" +
-								'\trequire(["delite/layer", "deliteful/layer"], function(){' + p3 + "\n\t});" + p4;
-						});
-					}
-				}
-			},
-			
-			deliteBuild: {
-				expand: true,
-				cwd: outdir + "delite",
-				src: "**/*",
-				dest: "delite-build/",
-				dot: true
-			},
-			
-			delitefulBuild: {
-				expand: true,
-				cwd: outdir + "deliteful",
-				src: "**/*",
-				dest: "deliteful-build/",
-				dot: true
 			}
 		},
 
 		// Erase temp directory and previous build
 		clean: {
-			erase: [outdir, "delite-build", "deliteful-build"],
+			erase: [outdir].concat(libDirsBuild),
 			finish: [tmpdir]
 		}
 	});
@@ -143,6 +112,17 @@ module.exports = function (grunt) {
 		grunt.file.write(path, content);
 	});
 	
+	grunt.registerTask("filterPluginFiles", function (stringRE) {
+		var rel = grunt.config(outprop + ".plugins.rel");
+		var abs = grunt.config(outprop + ".plugins.abs");
+		
+		function test (path) {
+			return !path.match(new RegExp(stringRE));
+		}
+		
+		grunt.config(outprop + ".plugins.rel", rel.filter(test));
+		grunt.config(outprop + ".plugins.abs", abs.filter(test));
+	});
 
 	// The main build task.
 	grunt.registerTask("amdbuild", function (amdloader) {
@@ -154,7 +134,7 @@ module.exports = function (grunt) {
 				case "delite/layer":
 					grunt.task.run("amddepsscan:" + layer.name + ":" + name + ":" + amdloader);
 					break;
-				case "deliteful/layer":
+				default:
 					grunt.task.run("amddirscan:" + layer.name + ":" + name + ":" + amdloader);
 					break;				
 				}
@@ -162,7 +142,104 @@ module.exports = function (grunt) {
 			grunt.task.run("amdserialize:" + layer.name + ":" + name + ":" + outprop);
 			grunt.task.run("uglify");
 			grunt.task.run("correctSourceMap:" + layer.name);
+			// Remove references to useless html template before copying plugins files.
+			grunt.task.run("filterPluginFiles:\\.html\\.js$");
 			grunt.task.run("copy:plugins");
+		});
+		
+		libDirs.forEach(function (dir){
+			grunt.task.run("buildLib:amdbuild:"+ dir);
+		});
+	});
+	
+	function removeTraillingComa(content) {
+		if (content.charAt(content.length - 1) === ",") {
+			content = content.slice(0, -1);
+		} else if (content.charAt(content.length - 1) === "\n" && content.charAt(content.length - 2) === ",") {
+			content = content.slice(0, -2) + content.charAt(content.length - 1);
+		}
+		return content;
+	}
+
+	// Update samples
+	function buildSamples (content, path, buildDeps) {
+		var scriptRE = /(<script[^>]*>[\s\S]*?<\/script>[\s\S]*?<script[^>]*>[\s\S]*?)(\s*?<\/script>[\s\S]*?<script[^>]*>\s*?)([\s\S]*?\S)(\s*?<\/script>)/;
+		
+		return content.replace(scriptRE, function(match, p1, p2, p3, p4, offset, string){
+			var result = p1 + "\n" +
+				"\t\trequirejs.config({\n" +
+				"\t\t\tpackages:[\n";
+			buildDeps.forEach(function (lib) {
+				result += "\t\t\t\t{name: '"+lib+"', location: '"+lib+"-build/'},\n";
+			});
+			result = removeTraillingComa(result);
+			result += "\t\t\t]\n" +
+				"\t\t});" +
+				p2 + "\n" +
+				"\trequire([";
+			buildDeps.forEach(function (lib) {
+				result += '"' + lib + '/layer",';
+			});
+			result = removeTraillingComa(result);
+			result += "], function(){" + p3 + "\n\t});" + p4;
+			return result;
+		});
+	}
+	
+	grunt.registerTask("buildLib", function(buildProp, dirName) {
+		var ibmDeps = [];
+		
+		// Update Bower.json
+		var bower = grunt.file.readJSON(dirName + "/bower.json");
+		bower.name += "-build";
+		
+		var deps = bower.dependencies;
+		for (var dep in deps) {
+			if (libDirs.indexOf(dep) !== -1) {
+				deps[dep + "-build"] = deps[dep];
+				delete deps[dep];
+				ibmDeps.push(dep);
+			}
+		}
+		
+		bower.devDependencies = {};
+		bower.devDependencies[dirName] = bower.version;
+		
+		grunt.file.write(outdir + dirName + "/bower.json", JSON.stringify(bower, null, 2));
+		
+		// Copy files
+		grunt.file.copy(dirName + "/LICENSE", dirName + "-build/LICENSE");
+		try {
+			grunt.file.copy(dirName + "/.bowerrc", dirName + "-build/.bowerrc");
+		} catch (e) {
+		}
+		
+		// Add README.md
+		grunt.file.copy("./README.template", dirName + "-build/README.md", {
+			process: function (template) {
+				return grunt.template.process(template, {data: {project: dirName}});
+			}
+		});
+			
+		// Copy and modify samples.
+		var samples = grunt.file.expand({filter: "isFile", cwd: dirName}, "./samples/**/*");
+		samples.forEach(function(path){
+			var orig = dirName + "/" + path;
+			var dest = dirName + "-build/" + path;
+			grunt.file.copy(orig, dest, {
+				noProcess: "**/*.png",
+				process: function (content, path) {
+					return buildSamples(content, path, ibmDeps);
+				}
+			});
+		})
+		
+		// Copy to final destination
+		var files = grunt.file.expand({filter: "isFile", cwd: outdir + dirName},  "./**/*");
+		files.forEach(function(path){
+			var orig = outdir + dirName + "/" + path;
+			var dest = dirName + "-build/" + path;
+			grunt.file.copy(orig, dest);
 		});
 	});
 
@@ -176,5 +253,5 @@ module.exports = function (grunt) {
 	grunt.loadNpmTasks('grunt-contrib-clean');
 
 	// Default task.
-	grunt.registerTask("default", ["clean:erase", "amdbuild:amdloader", "amdreportjson:amdbuild", "copy:others", "copy:delitefulSamples", "copy:deliteBuild","copy:delitefulBuild", "clean:finish"]);
+	grunt.registerTask("default", ["clean:erase", "amdbuild:amdloader", "amdreportjson:amdbuild", "clean:finish"]);
 };

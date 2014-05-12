@@ -4,7 +4,8 @@
 	"description": "",
 	"dependencies": {
 		"delite": "^0.1.3-dev",
-		"deliteful": "^0.1.1-dev"
+		"deliteful": "^0.1.1-dev",
+		"liaison": "ibm-js/liaison#master"
 	},
 	"keywords": [
 	],

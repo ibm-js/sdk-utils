@@ -18,23 +18,23 @@ module.exports = function (grunt) {
 	});
 	
 	var delitePatterns = [
-			// Include
-			"delite/**/*.js", 
-			// Exclude
-			"!delite/dijit/**", 
-			"!delite/docs/**",
-			"!delite/form/**",
-			"!delite/Gruntfile.js",
-			"!delite/layout/**",
-			"!delite/mobile/**",
-			"!delite/nls/**",
-			"!delite/samples/**", 
-			"!delite/tests/**", 
-			"!delite/themes/tasks/**", 
-			"!delite/**/holodark/**", 
-			"!delite/**/ios/**"
-		];
-
+		// Include
+		"delite/**/*.js", 
+		// Exclude
+		"!delite/dijit/**", 
+		"!delite/docs/**",
+		"!delite/form/**",
+		"!delite/Gruntfile.js",
+		"!delite/layout/**",
+		"!delite/mobile/**",
+		"!delite/nls/**",
+		"!delite/samples/**", 
+		"!delite/tests/**", 
+		"!delite/themes/tasks/**", 
+		"!delite/**/holodark/**", 
+		"!delite/**/ios/**"
+	];
+		
 	grunt.initConfig({
 	// The loader config should go here.
 		amdloader: {
@@ -163,25 +163,26 @@ module.exports = function (grunt) {
 
 	// Update samples
 	function buildSamples (content, path, buildDeps) {
-		var scriptRE = /(<script[^>]*>[\s\S]*?<\/script>[\s\S]*?<script[^>]*>[\s\S]*?)(\s*?<\/script>[\s\S]*?<script[^>]*>\s*?)([\s\S]*?\S)(\s*?<\/script>)/;
+		var scriptRE = /(<script[^>]*>)(\s*require\s*\(\s*\[[\s\S]*?)(<\/script>)/ig;
+
+		var config = "\trequire.config({\n" + "\t\tpackages:[\n";
+		buildDeps.forEach(function (lib) {
+			config += "\t\t\t{name: '"+lib+"', location: '"+lib+"-build/'},\n";
+		});
+		config = removeTraillingComa(config);
+		config += "\t\t]\n" + "\t});\n";
 		
-		return content.replace(scriptRE, function(match, p1, p2, p3, p4, offset, string){
-			var result = p1 + "\n" +
-				"\t\trequirejs.config({\n" +
-				"\t\t\tpackages:[\n";
-			buildDeps.forEach(function (lib) {
-				result += "\t\t\t\t{name: '"+lib+"', location: '"+lib+"-build/'},\n";
-			});
-			result = removeTraillingComa(result);
-			result += "\t\t\t]\n" +
-				"\t\t});" +
-				p2 + "\n" +
+		var count = 0;
+		return content.replace(scriptRE, function(match, openTag, content, closeTag){
+			var result = openTag + "\n" +
+				// If it is the first require of the file include config.
+				(count++ === 0 ? config : "") + 
 				"\trequire([";
 			buildDeps.forEach(function (lib) {
 				result += '"' + lib + '/layer",';
 			});
 			result = removeTraillingComa(result);
-			result += "], function(){" + p3 + "\n\t});" + p4;
+			result += "], function(){" + content + "\n\t});\n\t" + closeTag;
 			return result;
 		});
 	}

@@ -188,7 +188,7 @@ module.exports = function (grunt) {
 	}
 	
 	grunt.registerTask("buildLib", function(buildProp, dirName) {
-		var ibmDeps = [];
+		var ibmDeps = [dirName];
 		
 		// Update Bower.json
 		var bower = grunt.file.readJSON(dirName + "/bower.json");

@@ -223,12 +223,12 @@ module.exports = function (grunt) {
 		});
 			
 		// Copy and modify samples.
-		var samples = grunt.file.expand({filter: "isFile", cwd: dirName}, "./samples/**/*");
+		var samples = grunt.file.expand({filter: "isFile", cwd: dirName}, "samples/**/*");
 		samples.forEach(function(path){
 			var orig = dirName + "/" + path;
 			var dest = dirName + "-build/" + path;
 			grunt.file.copy(orig, dest, {
-				noProcess: "**/*.png",
+				noProcess: ["**/*.png", "**/*.js", "**/*.less"],
 				process: function (content, path) {
 					return buildSamples(content, path, ibmDeps);
 				}
@@ -236,12 +236,14 @@ module.exports = function (grunt) {
 		})
 		
 		// Copy to final destination
-		var files = grunt.file.expand({filter: "isFile", cwd: outdir + dirName},  "./**/*");
+		var files = grunt.file.expand({filter: "isFile", cwd: outdir + dirName},  "**/*");
 		files.forEach(function(path){
 			var orig = outdir + dirName + "/" + path;
 			var dest = dirName + "-build/" + path;
 			grunt.file.copy(orig, dest);
 		});
+		
+		
 	});
 
 

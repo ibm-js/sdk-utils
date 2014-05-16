@@ -6,7 +6,8 @@
 		"delite": "ibm-js/delite#master",
 		"deliteful": "ibm-js/deliteful#master",
 		"dtreemap": "ibm-js/dtreemap#master",
-		"dpointer": "ibm-js/dpointer#master"
+		"dpointer": "ibm-js/dpointer#master",
+		"liaison": "ibm-js/liaison#master"
 	},
 	"keywords": [
 	],

@@ -12,7 +12,7 @@ module.exports = function (grunt) {
 	// list of files to include in the layer.
 	var outprop = "amdoutput";
 	
-	var libDirs = ["delite", "deliteful", "dpointer", "dtreemap"];
+	var libDirs = ["delite", "deliteful", "dpointer", "dtreemap", "liaison"];
 	var libDirsBuild = libDirs.map(function(dir) {
 		return dir + "-build";
 	});
@@ -65,6 +65,14 @@ module.exports = function (grunt) {
 				name: "dtreemap/layer",
 				includeFiles: ["dtreemap/**/*.js"],
 				excludeFiles: ["dtreemap/tests/**", "dtreemap/demos/**", "dtreemap/docs/**"]
+			},{
+				name: "liaison/layer",
+				includeFiles: ["liaison/**/*.js"],
+				excludeFiles: ["liaison/delite/**", "liaison/polymer/**", "liaison/tests/**", "liaison/samples/**", "liaison/docs/**", "liaison/node_modules/**", "liaison/Gruntfile.js"]
+			},{
+				name: "liaison/delite/layer",
+				includeFiles: ["liaison/delite/**/*.js"],
+				excludeFiles: ["liaison/delite/widgets/StarRating.js"]
 			}]
 		},
 
@@ -75,6 +83,22 @@ module.exports = function (grunt) {
 			}
 		},
 
+		buildLib: {
+			amdbuild: {
+				liaison: {
+					samples: {
+						src: ["./samples/**/*", "!./samples/**/loan.html", "!./samples/delite/widgetskitchensink.html", "!./samples/delite-polymer/**/*", "!./samples/polymer/**/*"],
+						"./samples/delite/**/*": {
+							sublayers: ["liaison/delite"],
+							packages: [
+								{name: "liaison", location: "liaison-build"}
+							]
+						}
+					}
+				}
+			}
+		},
+ 
 		// Config to allow uglify to generate the layer.
 		uglify: {
 			options: {
@@ -152,38 +176,31 @@ module.exports = function (grunt) {
 		});
 	});
 	
-	function removeTraillingComa(content) {
-		if (content.charAt(content.length - 1) === ",") {
-			content = content.slice(0, -1);
-		} else if (content.charAt(content.length - 1) === "\n" && content.charAt(content.length - 2) === ",") {
-			content = content.slice(0, -2) + content.charAt(content.length - 1);
-		}
-		return content;
-	}
-
 	// Update samples
-	function buildSamples (content, path, buildDeps) {
-		var scriptRE = /(<script[^>]*>)(\s*require\s*\(\s*\[[\s\S]*?)(<\/script>)/ig;
+	function buildSamples (content, path, buildDeps, packages) {
+		var scriptRE = /(<script[^>]*>)(\s*require\s*\(\s*\[[\s\S]*?)(<\/script>)/ig,
+			config = "\trequire.config(" +
+				JSON.stringify({
+					packages: packages || buildDeps.map(function (lib) {
+						return {name: lib, location: lib + "-build"};
+					})
+				}, null, "\t").split("\n").map(function (line, i) {
+					return (i > 0 ? "\t" : "") + line;
+				}).join("\n") +
+				");\n";
 
-		var config = "\trequire.config({\n" + "\t\tpackages:[\n";
-		buildDeps.forEach(function (lib) {
-			config += "\t\t\t{name: '"+lib+"', location: '"+lib+"-build/'},\n";
-		});
-		config = removeTraillingComa(config);
-		config += "\t\t]\n" + "\t});\n";
-		
 		var count = 0;
 		return content.replace(scriptRE, function(match, openTag, content, closeTag){
-			var result = openTag + "\n" +
+			return openTag + "\n" +
 				// If it is the first require of the file include config.
-				(count++ === 0 ? config : "") + 
-				"\trequire([";
-			buildDeps.forEach(function (lib) {
-				result += '"' + lib + '/layer",';
-			});
-			result = removeTraillingComa(result);
-			result += "], function(){" + content + "\n\t});\n\t" + closeTag;
-			return result;
+				(count++ === 0 ? config : "") +
+				"\trequire(" +
+				JSON.stringify(buildDeps.map(function (lib) {
+					return lib + "/layer";
+				}), null, "\t").split("\n").map(function (line, i) {
+					return (i > 0 ? "\t" : "") + line;
+				}).join("\n") +
+				", function(){" + content + "\n\t});\n\t" + closeTag;
 		});
 	}
 	
@@ -223,14 +240,30 @@ module.exports = function (grunt) {
 		});
 			
 		// Copy and modify samples.
-		var samples = grunt.file.expand({filter: "isFile", cwd: dirName}, "samples/**/*");
+		var pathModule = require("path"),
+			config = grunt.config((this.nameArgs + ":samples").split(":")),
+			samples = grunt.file.expand({filter: "isFile", cwd: dirName}, (config || {}).src || "samples/**/*"),
+			fileConfig = {};
+
+		if (config) {
+			Object.keys(config).forEach(function (pattern) {
+				if (pattern !== "excludes") {
+					grunt.file.expand({filter: "isFile", cwd: dirName}, pattern).forEach(function (path) {
+						fileConfig[pathModule.normalize(path)] = config[pattern];
+					});
+				}
+			});
+		}
+
 		samples.forEach(function(path){
 			var orig = dirName + "/" + path;
 			var dest = dirName + "-build/" + path;
+			var sublayersDeps = (fileConfig[pathModule.normalize(path)] || {}).sublayers || [];
+			var packages = (fileConfig[pathModule.normalize(path)] || {}).packages;
 			grunt.file.copy(orig, dest, {
 				noProcess: ["**/*.png", "**/*.js", "**/*.less"],
 				process: function (content, path) {
-					return buildSamples(content, path, ibmDeps);
+					return buildSamples(content, path, ibmDeps.concat(sublayersDeps), packages);
 				}
 			});
 		})

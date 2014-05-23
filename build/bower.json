@@ -3,8 +3,11 @@
 	"version": "0.1.0-dev",
 	"description": "",
 	"dependencies": {
-		"delite": "^0.1.3-dev",
-		"deliteful": "^0.1.1-dev"
+		"delite": "ibm-js/delite#master",
+		"deliteful": "ibm-js/deliteful#master",
+		"dtreemap": "ibm-js/dtreemap#master",
+		"dpointer": "ibm-js/dpointer#master",
+		"liaison": "ibm-js/liaison#master"
 	},
 	"keywords": [
 	],

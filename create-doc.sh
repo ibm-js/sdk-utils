@@ -14,6 +14,7 @@ else
 fi
 dir=$(dirname "$0")
 echo "getting the template from $dir"
+dir=..
 cp -R $dir/gh-template/* .
 sed -i.bak s/RepoName/$2/g _config.yml
 git add css

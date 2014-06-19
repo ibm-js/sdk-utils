@@ -84,16 +84,14 @@ module.exports = function (grunt) {
 		},
 
 		buildLib: {
-			amdbuild: {
-				liaison: {
-					samples: {
-						src: ["./samples/**/*", "!./samples/**/loan.html", "!./samples/delite/widgetskitchensink.html", "!./samples/delite-polymer/**/*", "!./samples/polymer/**/*"],
-						"./samples/delite/**/*": {
-							sublayers: ["liaison/delite"],
-							packages: [
-								{name: "liaison", location: "liaison-build"}
-							]
-						}
+			liaison: {
+				samples: {
+					src: ["./samples/**/*", "!./samples/**/loan.html", "!./samples/delite/widgetskitchensink.html", "!./samples/delite-polymer/**/*", "!./samples/polymer/**/*"],
+					"./samples/delite/**/*": {
+						sublayers: ["liaison/delite"],
+						packages: [
+							{name: "liaison", location: "liaison-build"}
+						]
 					}
 				}
 			}
@@ -172,7 +170,7 @@ module.exports = function (grunt) {
 		});
 		
 		libDirs.forEach(function (dir){
-			grunt.task.run("buildLib:amdbuild:"+ dir);
+			grunt.task.run("buildLib:"+ dir);
 		});
 	});
 	
@@ -204,7 +202,7 @@ module.exports = function (grunt) {
 		});
 	}
 	
-	grunt.registerTask("buildLib", function(buildProp, dirName) {
+	grunt.registerTask("buildLib", function(dirName) {
 		var ibmDeps = [dirName];
 		
 		// Update Bower.json
@@ -241,7 +239,7 @@ module.exports = function (grunt) {
 			
 		// Copy and modify samples.
 		var pathModule = require("path"),
-			config = grunt.config((this.nameArgs + ":samples").split(":")),
+			config = grunt.config([this.name, dirName, "samples"]),
 			samples = grunt.file.expand({filter: "isFile", cwd: dirName}, (config || {}).src || "samples/**/*"),
 			fileConfig = {};
 

@@ -39,8 +39,9 @@ module.exports = function (grunt) {
 	// The loader config should go here.
 		amdloader: {
 			baseUrl: "./",
-			packages: [
-			]
+
+			// Enable build of requirejs-text/text
+			inlineText: true
 		},
 
 		amdbuild: {
@@ -74,13 +75,6 @@ module.exports = function (grunt) {
 				includeFiles: ["liaison/delite/**/*.js"],
 				excludeFiles: ["liaison/delite/widgets/StarRating.js"]
 			}]
-		},
-
-		// Here goes the config for the amd plugins build process.
-		amdplugins: {
-			"requirejs-text/text": {
-				inlineText: true
-			}
 		},
 
 		buildLib: {
@@ -160,7 +154,6 @@ module.exports = function (grunt) {
 					grunt.task.run("amddirscan:" + layer.name + ":" + name + ":" + amdloader);
 					break;				
 				}
-			grunt.task.run("amdplugins:" + layer.name + ":" + name + ":" + amdloader);
 			grunt.task.run("amdserialize:" + layer.name + ":" + name + ":" + outprop);
 			grunt.task.run("uglify");
 			grunt.task.run("correctSourceMap:" + layer.name);

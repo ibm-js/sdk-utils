@@ -8,4 +8,5 @@ curl -H "Authorization: token $1" -d "{\"name\":\"3-high\",\"color\":\"fad8c7\"}
 curl -H "Authorization: token $1" -d "{\"name\":\"4-blocker\",\"color\":\"f7c6c7\"}" https://api.github.com/repos/$2/$3/labels
 curl -H "Authorization: token $1" -d "{\"name\":\"feature\",\"color\":\"fbca04\"}" https://api.github.com/repos/$2/$3/labels
 curl -H "Authorization: token $1" -d "{\"name\":\"task\",\"color\":\"009800\"}" https://api.github.com/repos/$2/$3/labels
+curl -H "Authorization: token $1" -d "{\"name\":\"postponed\",\"color\":\"#5f5f5f\"}" https://api.github.com/repos/$2/$3/labels
 

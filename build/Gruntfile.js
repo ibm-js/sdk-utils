@@ -12,7 +12,7 @@ module.exports = function (grunt) {
 	// list of files to include in the layer.
 	var outprop = "amdoutput";
 
-	var libDirs = ["decor", "delite", "deliteful", "dpointer", "dtreemap", "dcolor", "ecma402"/*, "liaison"*/];
+	var libDirs = ["decor", "delite", "deliteful", "dpointer", "dtreemap", "dcolor", "ecma402", "liaison"];
 	var libDirsBuild = libDirs.map(function (dir) {
 		return dir + "-build";
 	});
@@ -113,16 +113,15 @@ module.exports = function (grunt) {
 			}, {
 				name: "dcolor/layer",
 				includeFiles: ["dcolor/*.js"]
-			}] //,{
-			// },{
-			// name: "liaison/layer",
-			// includeFiles: ["liaison/**/*.js"],
-			// excludeFiles: ["liaison/delite/**", "liaison/polymer/**", "liaison/tests/**", "liaison/samples/**", "liaison/docs/**", "liaison/node_modules/**", "liaison/Gruntfile.js"]
-			// },{
-			// name: "liaison/delite/layer",
-			// includeFiles: ["liaison/delite/**/*.js"],
-			// excludeFiles: ["liaison/delite/widgets/StarRating.js"]
-			// }]
+			}, {
+				name: "liaison/layer",
+				includeFiles: ["liaison/**/*.js"],
+				excludeFiles: ["liaison/delite/**", "liaison/polymer/**", "liaison/tests/**", "liaison/samples/**", "liaison/docs/**", "liaison/node_modules/**", "liaison/Gruntfile.js"]
+			}, {
+				name: "liaison/delite/layer",
+				includeFiles: ["liaison/delite/**/*.js"],
+				excludeFiles: ["liaison/delite/widgets/StarRating.js"]
+			}]
 		},
 
 		buildLib: {
@@ -136,11 +135,7 @@ module.exports = function (grunt) {
 						"!./samples/polymer/**/*"
 					],
 					"./samples/delite/**/*": {
-						sublayers: ["liaison/delite"],
-						packages: [{
-							name: "liaison",
-							location: "liaison-build"
-						}]
+						deps: ["liaison/delite", "liaison"]
 					}
 				}
 			}
@@ -224,9 +219,14 @@ module.exports = function (grunt) {
 
 	// Generate root file.
 	function getBoot(buildDeps) {
+		var packages = [];
+		buildDeps.forEach(function (dep){
+			dep = dep.split("/")[0];
+			packages.indexOf(dep) === -1 && packages.push(dep);
+		});
 		var result = "require.config(" +
 			JSON.stringify({
-				packages: buildDeps.map(function (lib) {
+				packages: packages.map(function (lib) {
 					return {
 						name: lib,
 						location: lib + "-build"
@@ -243,12 +243,17 @@ module.exports = function (grunt) {
 		return result;
 	}
 
+	function getBootModule(deps, ext) {
+		return deps[0].replace(/^([^\/]*)(.*)$/, "$1-build$2/boot" + (ext || ""));
+	}
+
 	// Update samples
 	function buildSamples(content, buildDeps) {
 		var scriptRE = /(<script[^>]*>)(\s*require\s*\(\s*\[[\s\S]*?)(<\/script>)/ig;
 		return content.replace(scriptRE, function (match, openTag, content, closeTag) {
+			var bootModule = getBootModule(buildDeps);
 			return openTag + "\n" +
-				"\trequire([\"" + buildDeps[0] + "-build/boot\"], function(){" + content + "\n\t});\n\t" + closeTag;
+				"\trequire([\"" + bootModule + "\"], function(){" + content + "\n\t});\n\t" + closeTag;
 		});
 	}
 
@@ -321,21 +326,29 @@ module.exports = function (grunt) {
 			});
 		}
 
+		var bootDirs = [ibmDeps];
+
 		samples.forEach(function (path) {
 			var orig = dirName + "/" + path;
 			var dest = dirName + "-build/" + path;
-			var sublayersDeps = (fileConfig[pathModule.normalize(path)] || {}).sublayers || [];
-			var packages = (fileConfig[pathModule.normalize(path)] || {}).packages;
+			var deps = (fileConfig[pathModule.normalize(path)] || {}).deps || ibmDeps;
+
+			if (dirName !== deps[0]) {
+				// Add boot file.
+				bootDirs.push(deps);
+			}
 			grunt.file.copy(orig, dest, {
 				noProcess: ["**/*.png", "**/*.js", "**/*.less"],
 				process: function (content) {
-					return buildSamples(content, ibmDeps);
+					return buildSamples(content, deps);
 				}
 			});
 		});
 
-		// Add boot file
-		grunt.file.write(dirName + "-build/boot.js", getBoot(ibmDeps));
+		bootDirs.forEach(function (deps){
+			// Create boot files.
+			grunt.file.write(getBootModule(deps, ".js"), getBoot(deps));
+		});
 
 		// Copy to final destination
 		var files = grunt.file.expand({

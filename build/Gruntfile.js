@@ -30,8 +30,7 @@ module.exports = function (grunt) {
 	var delitePatterns = [
 		// Include
 		"delite/**/*.js",
-		"dojo/hccss.js",
-		"dojo/string.js",
+		"dojo/dom-geometry.js", // For dtreemap
 		"requirejs-text/text.js",
 		// Exclude
 		"!delite/Gruntfile.js",

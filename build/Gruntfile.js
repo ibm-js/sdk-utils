@@ -207,7 +207,7 @@ module.exports = function (grunt) {
 			grunt.task.run("uglify");
 			grunt.task.run("correctSourceMap:" + layer.name);
 			// Remove references to useless html template before copying plugins files.
-			grunt.task.run("filterPluginFiles:\\.html\\.js$");
+			grunt.task.run("filterPluginFiles:\\.(html|json)\\.js$");
 			grunt.task.run("copy:plugins");
 		});
 

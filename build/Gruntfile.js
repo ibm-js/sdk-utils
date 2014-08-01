@@ -127,14 +127,14 @@ module.exports = function (grunt) {
 			liaison: {
 				samples: {
 					src: [
-						"./samples/**/*",
-						"!./samples/**/loan.html",
-						"!./samples/delite/widgetskitchensink.html",
-						"!./samples/delite-polymer/**/*",
-						"!./samples/polymer/**/*"
+						"samples/**/*",
+						"!samples/**/loan.html",
+						"!samples/delite/widgetskitchensink.html",
+						"!samples/delite-polymer/**/*",
+						"!samples/polymer/**/*"
 					],
-					"./samples/delite/**/*": {
-						deps: ["liaison/delite", "liaison"]
+					"samples/delite/**/*": {
+						deps: ["liaison/delite", "delite", "liaison"]
 					}
 				}
 			}
@@ -219,7 +219,7 @@ module.exports = function (grunt) {
 	// Generate root file.
 	function getBoot(buildDeps) {
 		var packages = [];
-		buildDeps.forEach(function (dep){
+		buildDeps.forEach(function (dep) {
 			dep = dep.split("/")[0];
 			packages.indexOf(dep) === -1 && packages.push(dep);
 		});
@@ -259,32 +259,41 @@ module.exports = function (grunt) {
 	grunt.registerTask("buildLib", function (dirName) {
 		var ibmDeps = [dirName];
 
-		// Update Bower.json
-		var bower = grunt.file.readJSON(dirName + "/bower.json");
-		bower.name += "-build";
+		function updateBowerJson(projName, dirName, ibmDeps) {
+			// Update Bower.json
+			var bower;
+			try {
+				bower = grunt.file.readJSON(dirName + "/bower.json");
+			} catch (e) {
+				return;
+			}
+			bower.name += "-build";
 
-		if (dirName === "decor") {
-			bower.dependencies = {};
-		} else {
-			var deps = bower.dependencies || {};
-			var removeDeps = deps.decor ? ["dcl", "requirejs-dplugins"] : [];
-			removeDeps = removeDeps.concat(deps.delite ? ["requirejs-domready", "requirejs-text", "dojo"] : []);
-			for (var dep in deps) {
-				if (libDirs.indexOf(dep) !== -1) {
-					deps[dep + "-build"] = deps[dep];
-					delete deps[dep];
-					ibmDeps.push(dep);
-				}
-				if (removeDeps.indexOf(dep) !== -1 && deps[dep]) {
-					delete deps[dep];
+			if (dirName === "decor") {
+				bower.dependencies = {};
+			} else {
+				var deps = bower.dependencies || {};
+				var removeDeps = deps.decor ? ["dcl", "requirejs-dplugins"] : [];
+				removeDeps = removeDeps.concat(deps.delite ? ["requirejs-domready", "requirejs-text", "dojo"] : []);
+				for (var dep in deps) {
+					if (libDirs.indexOf(dep) !== -1) {
+						deps[dep + "-build"] = deps[dep];
+						delete deps[dep];
+						ibmDeps.push(dep);
+					}
+					if (removeDeps.indexOf(dep) !== -1 && deps[dep]) {
+						delete deps[dep];
+					}
 				}
 			}
+
+			bower.devDependencies = {};
+			bower.devDependencies[projName] = bower.version;
+
+			grunt.file.write(outdir + dirName + "/bower.json", JSON.stringify(bower, null, 2));
 		}
 
-		bower.devDependencies = {};
-		bower.devDependencies[dirName] = bower.version;
-
-		grunt.file.write(outdir + dirName + "/bower.json", JSON.stringify(bower, null, 2));
+		updateBowerJson(dirName, dirName, ibmDeps);
 
 		// Copy files
 		grunt.file.copy(dirName + "/LICENSE", dirName + "-build/LICENSE");
@@ -326,6 +335,7 @@ module.exports = function (grunt) {
 		}
 
 		var bootDirs = [ibmDeps];
+		var sampleDirNames = {};
 
 		samples.forEach(function (path) {
 			var orig = dirName + "/" + path;
@@ -336,6 +346,9 @@ module.exports = function (grunt) {
 				// Add boot file.
 				bootDirs.push(deps);
 			}
+
+			sampleDirNames[pathModule.dirname(path)] = 1;
+
 			grunt.file.copy(orig, dest, {
 				noProcess: ["**/*.png", "**/*.js", "**/*.less"],
 				process: function (content) {
@@ -344,9 +357,17 @@ module.exports = function (grunt) {
 			});
 		});
 
-		bootDirs.forEach(function (deps){
+		bootDirs.forEach(function (deps) {
 			// Create boot files.
 			grunt.file.write(getBootModule(deps, ".js"), getBoot(deps));
+		});
+
+		bootDirs.forEach(function (deps) {
+			updateBowerJson(dirName, deps[0], []);
+		});
+
+		Object.keys(sampleDirNames).forEach(function (sampleDirName) {
+			updateBowerJson(dirName, pathModule.join(dirName, sampleDirName), []);
 		});
 
 		// Copy to final destination

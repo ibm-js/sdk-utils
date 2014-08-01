@@ -74,10 +74,6 @@ module.exports = function (grunt) {
 
 			// Enable build of requirejs-text/text
 			inlineText: true,
-			config: {
-				"ecma402/locales": /^(zh-Han(s|t)|en|es|fr|it|pt|ja|de)$/
-			}
-
 		},
 
 		amdbuild: {

@@ -3,11 +3,14 @@
 	"version": "0.1.0-dev",
 	"description": "",
 	"dependencies": {
-		"delite": "ibm-js/delite#master",
-		"deliteful": "ibm-js/deliteful#master",
-		"dtreemap": "ibm-js/dtreemap#master",
-		"dpointer": "ibm-js/dpointer#master",
-		"liaison": "ibm-js/liaison#master"
+		"decor": "0.2.0-dev",
+		"delite": "0.2.0-dev",
+		"deliteful": "0.2.0-dev",
+		"dtreemap": "0.1.x",
+		"dpointer": "0.1.x",
+		"liaison": "0.1.x",
+		"ecma402": "0.2.x",
+		"dcolor": "0.1.x"
 	},
 	"keywords": [
 	],

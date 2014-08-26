@@ -6,15 +6,18 @@ To install this project, get the content of this directory and run the following
 ```
 $ npm install
 $ bower install -p
+$ cd delite
+$ npm install
+$ cd ..
 ```
 
 ## Usage
-Call the default grunt task to build `delite`, `deliteful`, `dtreemap`, `dpointer`.
+Call the default grunt task to build `decor`, `delite`, `deliteful`, `dpointer`, `dtreemap`, `dcolor`, `ecma402`.
 ```
 $ grunt
 ```
 Then the build projects will be in `projectname-build`.
- 
+
 ## Licensing
 
 This project is distributed by the Dojo Foundation and licensed under the ["New" BSD License](./LICENSE).

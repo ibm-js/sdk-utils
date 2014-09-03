@@ -88,7 +88,7 @@ module.exports = function (grunt) {
 				include: grunt.file.expand(expandFiles, decorPatterns).map(trimExt)
 			}, {
 				name: "dpointer/layer",
-				includeFiles: ["dpointer/**/*.js"]
+				includeFiles: ["dpointer/events.js", "dpointer/handlers/*.js"]
 			}, {
 				name: "ecma402/layer",
 				include: ["ecma402/IntlShim"],

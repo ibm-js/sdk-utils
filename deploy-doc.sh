@@ -5,6 +5,8 @@
 
 # Clone repository if it doesn't already exist.
 # Otherwise just update it.
+# note that this might not work correctly if you checkout the same repo name
+# from a different user name
 if [ ! -d $2 ]
 then
 	git clone git@github.com:$1/$2.git
@@ -14,6 +16,10 @@ else
 	git checkout $3
 	git pull
 fi
+
+# generate jsdoc
+npm install
+grunt jsdoc
 
 git checkout gh-pages
 mkdir -p docs/$3
@@ -37,6 +43,9 @@ find docsco -name "*.bak" -type f | xargs /bin/rm -f
 
 # Check in updated doc files into gh-pages branch
 cp -R docsco/docs/* docs/$3
+cp -R out/$2/docs/* docs
+# waiting for https://github.com/ibm-js/jsdoc-amddcl/issues/40 we should if we could have a mechanism
+# that copies to missing scripts (not here yet)
 git add --all docs
 git commit -m "update doc"
 

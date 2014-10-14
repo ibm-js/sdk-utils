@@ -23,8 +23,7 @@ module.exports = function (grunt) {
 		"requirejs-dplugins/has.js",
 		"requirejs-dplugins/i18n.js",
 		// Exclude
-		"!decor/Gruntfile.js",
-		"!decor/keys.js"
+		"!decor/Gruntfile.js"
 	];
 
 	var delitePatterns = [
@@ -73,7 +72,7 @@ module.exports = function (grunt) {
 			baseUrl: "./",
 
 			// Enable build of requirejs-text/text
-			inlineText: true,
+			inlineText: true
 		},
 
 		amdbuild: {
@@ -100,14 +99,15 @@ module.exports = function (grunt) {
 			}, {
 				name: "deliteful/layer",
 				include: grunt.file.expand(expandFiles, delitefulPatterns).map(trimExt),
-				exclude: ["decor/layer", "dpointer/layer", "ecma402/layer", "delite/layer", "dstore/Memory", "dstore/Observable"]
+				exclude: ["decor/layer", "dpointer/layer", "ecma402/layer", "delite/layer", "dstore/Memory", "dstore/Trackable"]
 			}, {
 				name: "dtreemap/layer",
 				includeFiles: ["dtreemap/**/*.js"],
 				excludeFiles: ["dtreemap/tests/**", "dtreemap/demos/**", "dtreemap/docs/**", "dtreemap/Gruntfile.js"]
 			}, {
 				name: "dcolor/layer",
-				includeFiles: ["dcolor/*.js"]
+				includeFiles: ["dcolor/*.js"],
+				excludeFiles: ["dcolor/Gruntfile.js"]
 			}, {
 				name: "liaison/layer",
 				includeFiles: ["liaison/**/*.js"],
@@ -296,6 +296,16 @@ module.exports = function (grunt) {
 		try {
 			grunt.file.copy(dirName + "/.bowerrc", dirName + "-build/.bowerrc");
 		} catch (e) {}
+
+		// Copy specific css files
+		grunt.file.copy("delite/themes/defaultapp.css", "delite-build/themes/defaultapp.css");
+
+		var transitions = ["cover", "coverv", "fade", "flip", "revealv", "slidev"];
+		var paths = ["deliteful", "-build", "/ViewStack/transitions/"];
+		for (var i = 0; i < transitions.length; i++) {
+			grunt.file.copy(paths[0] + paths[2] + transitions[i] + ".css", paths.join("") + transitions[i] + ".css");
+		}
+
 
 		// Add README.md
 		grunt.file.copy("./README.template", dirName + "-build/README.md", {

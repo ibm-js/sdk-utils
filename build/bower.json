@@ -3,11 +3,11 @@
 	"version": "0.1.0-dev",
 	"description": "",
 	"dependencies": {
-		"decor": "0.2.0-dev",
-		"delite": "0.2.0-dev",
-		"deliteful": "0.2.0-dev",
-		"dtreemap": "0.1.x",
-		"dpointer": "0.1.x",
+		"decor": "0.3.x",
+		"delite": "0.4.x",
+		"deliteful": "0.4.x",
+		"dtreemap": "0.2.x",
+		"dpointer": "0.3.x",
 		"liaison": "0.1.x",
 		"ecma402": "0.2.x",
 		"dcolor": "0.1.x"

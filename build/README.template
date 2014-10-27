@@ -5,7 +5,43 @@ Build version of [ibm-js/<%= project %>](https://github.com/ibm-js/<%= project %
 ## Status
 
 No official release yet.
- 
+
+## Installation
+
+_Bower_ release installation:
+
+    $ bower install <%= project %>-build
+
+_Manual_ master installation:
+
+    $ git clone git://github.com/ibm-js/<%= project %>-build.git
+
+Then install dependencies with bower (or manually from github if you prefer to):
+
+	$ cd <%= project %>-build
+	$ bower install
+
+
+## How to use
+
+To load the minified layer you need to wrap your main `require` call with another `require`, requiring `"<%= project %>-build/layer"`. Then you should continue to
+refer to modules with `"<%= project %>/foo"`.
+
+For example, this:
+```
+require(["app/main", "<%= project %>/foo"], function() {
+	...
+});
+```
+Becomes:
+```
+require(["<%= project %>-build/layer"], function() {
+	require(["app/main", "<%= project %>/foo"], function() {
+		...
+	});
+});
+```
+
 ## Licensing
 
 This project is distributed by the Dojo Foundation and licensed under the ["New" BSD License](./LICENSE).

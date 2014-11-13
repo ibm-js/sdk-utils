@@ -25,20 +25,20 @@ module.exports = function (grunt) {
 			}
 
 			// Generate root module.
-			var boot = "\nrequire.config(" +
-				JSON.stringify({
-					packages: [layerNameBuild.replace(/\/layer$/, "")].concat(builtDeps).map(function (dep) {
-						return {
-							name: dep.replace(/-build/, ""),
-							location: dep
-						};
-					})
-				}, null, "\t") +
-				");\n";
+			var boot = "\nvar paths = {};";
+			[layerNameBuild.replace(/\/layer$/, "")].concat(builtDeps).forEach(function (depBuilt) {
+				var dep = depBuilt.replace(/-build/, "")
+				boot += "\n!require.s.contexts._.config.paths[\"" + dep + "\"] && " +
+					"(paths[\"" + dep + "\"] = \"" + depBuilt + "\");"
+			});
+
+			boot += "\nrequire.config({" +
+				"\n\tpaths: paths" +
+				"\n});\n";
 			boot += "define(\"" + layerNameBuild + "\", " +
 				JSON.stringify(builtDeps.map(function (dep) {
 					return dep + "/layer";
-				})) + ", function(){});";
+				})) + ", function(){});\n";
 
 			grunt.file.write(path, grunt.file.read(path) + boot);
 		});

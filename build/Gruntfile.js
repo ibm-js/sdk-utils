@@ -68,7 +68,13 @@ module.exports = function (grunt) {
 			baseUrl: "./",
 
 			// Enable build of requirejs-text/text
-			inlineText: true
+			inlineText: true,
+
+			map: {
+				jquery: {
+					"jquery/src/selector": "jquery/src/selector-native"     // don't pull in sizzle
+				}
+			}
 		},
 
 		amdbuild: {

@@ -18,6 +18,8 @@ module.exports = function (grunt) {
 		"requirejs-dplugins/has.js",
 		"requirejs-dplugins/i18n.js",
 		"requirejs-dplugins/css.js",
+		"requirejs-dplugins/jquery.js",
+		"lie/dist/lie.js",
 		// Exclude
 		"!decor/Gruntfile.js"
 	];
@@ -25,7 +27,7 @@ module.exports = function (grunt) {
 	var delitePatterns = [
 		// Include
 		"delite/**/*.js",
-		"dojo/dom-geometry.js", // For dtreemap
+		//"dojo/dom-geometry.js", // For dtreemap
 		"requirejs-text/text.js",
 		// Exclude
 		"!delite/Gruntfile.js",
@@ -52,6 +54,16 @@ module.exports = function (grunt) {
 		"!deliteful/**/holodark/**",
 		"!deliteful/**/ios/**",
 		"!deliteful/Gruntfile.js"
+	];
+
+	var dtreemapPatterns = [
+		// Include
+		"dtreemap/**/*.js",
+		// Exclude
+		"!dtreemap/tests/**",
+		"!dtreemap/demos/**",
+		"!dtreemap/docs/**",
+		"!dtreemap/Gruntfile.js"
 	];
 
 	var expandFiles = {
@@ -83,6 +95,8 @@ module.exports = function (grunt) {
 			// dir is the output directory.
 			dir: tmpdir,
 
+			runtimePlugins: [],
+
 			// List of layers to build.
 			layers: [{
 				name: "decor/layer",
@@ -98,28 +112,30 @@ module.exports = function (grunt) {
 				name: "delite/layer",
 				include: grunt.file.expand(expandFiles, delitePatterns).map(trimExt)
 					.concat(["delite/theme!delite/themes/{{theme}}/global.css"]),
-				exclude: ["decor/layer", "dpointer/layer", "ecma402/layer"]
+				excludeLayers: ["decor/layer", "dpointer/layer", "ecma402/layer"]
 			}, {
 				name: "deliteful/layer",
 				include: grunt.file.expand(expandFiles, delitefulPatterns).map(trimExt),
-				exclude: ["decor/layer", "dpointer/layer", "ecma402/layer", "delite/layer", "dstore/Memory", "dstore/Trackable"]
-			}, {
+				exclude: ["dstore/Memory", "dstore/Trackable", "dstore/Filter"],
+				excludeLayers: ["decor/layer", "dpointer/layer", "ecma402/layer", "delite/layer"]
+			}/*, {
 				name: "dtreemap/layer",
-				includeFiles: ["dtreemap/**/*.js"],
-				excludeFiles: ["dtreemap/tests/**", "dtreemap/demos/**", "dtreemap/docs/**", "dtreemap/Gruntfile.js"]
+				include: grunt.file.expand(expandFiles, dtreemapPatterns).map(trimExt),
+				exclude: ["dstore/Memory", "dstore/Trackable", "dstore/Filter"],
+				excludeLayers: ["decor/layer", "dpointer/layer", "delite/layer"]
 			}, {
 				name: "dcolor/layer",
 				includeFiles: ["dcolor/*.js"],
 				excludeFiles: ["dcolor/Gruntfile.js"]
 			}, {
 				name: "liaison/layer",
-				includeFiles: ["liaison/**/*.js"],
+				includeFiles: ["liaison/**//*.js"],
 				excludeFiles: ["liaison/delite/**", "liaison/polymer/**", "liaison/tests/**", "liaison/samples/**", "liaison/docs/**", "liaison/node_modules/**", "liaison/Gruntfile.js"]
 			}, {
 				name: "liaison/delite/layer",
-				includeFiles: ["liaison/delite/**/*.js"],
+				includeFiles: ["liaison/delite/**//*.js"],
 				excludeFiles: ["liaison/delite/widgets/StarRating.js"]
-			}]
+			}*/]
 		},
 
 		updateSamples: {
@@ -177,7 +193,7 @@ module.exports = function (grunt) {
 	// The main build task.
 	grunt.registerTask("amdbuild", function (amdloader) {
 		function useAmdDepsScan(name) {
-			var layerToGetDeps = ["delite/layer", "decor/layer", "deliteful/layer", "ecma402/layer"];
+			var layerToGetDeps = ["delite/layer", "decor/layer", "deliteful/layer", "ecma402/layer", "dtreemap/layer"];
 			return layerToGetDeps.indexOf(name) >= 0;
 		}
 
@@ -192,7 +208,7 @@ module.exports = function (grunt) {
 			} else {
 				tasksList.push("amddirscan:" + layer.name + ":" + name + ":" + amdloader);
 			}
-			tasksList.push("amdserialize:" + layer.name + ":" + name + ":" + outprop);
+			tasksList.push("amdserialize:" + layer.name + ":" + name + ":" + amdloader + ":" + outprop);
 			tasksList.push("uglify");
 			tasksList.push("correctSourceMap:" + layer.name + ":" + name + ":" + outdir);
 			// Remove references to useless html template before copying plugins files.
@@ -216,6 +232,7 @@ module.exports = function (grunt) {
 
 	// Load vendor plugins.
 	grunt.loadNpmTasks("grunt-contrib-uglify");
+	grunt.loadNpmTasks("grunt-contrib-concat");
 	grunt.loadNpmTasks('grunt-contrib-copy');
 	grunt.loadNpmTasks('grunt-contrib-clean');
 

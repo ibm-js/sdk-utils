@@ -6,16 +6,18 @@ module.exports = function (grunt) {
 		var buildConfig = grunt.config(buildCfg);
 		var layers = buildConfig.layers;
 
-		// Get directories
+		// Once foreach directories containing a layer
 		var builtDirs = [];
 		layers.forEach(function (layer) {
 			var dir = layer.name.match(/^([^\/]*)\//)[1]
+
+			// Check this directory was not already processed
 			if (dir && builtDirs.indexOf(dir) === -1) {
 				builtDirs.push(dir);
+			} else {
+				return;
 			}
-		});
 
-		builtDirs.forEach(function (dir) {
 			// Copy generic files
 			grunt.file.copy(dir + "/LICENSE", outdir + dir + "/LICENSE");
 			try {
@@ -27,7 +29,8 @@ module.exports = function (grunt) {
 				process: function (template) {
 					return grunt.template.process(template, {
 						data: {
-							project: dir
+							project: dir,
+							configs: layer.configs
 						}
 					});
 				}

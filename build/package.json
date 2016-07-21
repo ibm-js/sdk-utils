@@ -1,5 +1,5 @@
 {
-  "name": "ibmjsFactory",
+  "name": "ibm-js-sdk-utils",
   "version": "0.1.0-dev",
   "description": "",
   "dependencies": {
